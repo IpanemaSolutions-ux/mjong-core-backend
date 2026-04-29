@@ -1,28 +1,29 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-  try {
-    // Parse JSON body
-    const body = await req.json();
-    const prompt = body.prompt;
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-    // Initialize Gemini
+  try {
+    // Parse JSON body (Node.js style)
+    let body = "";
+    await new Promise((resolve) => {
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", resolve);
+    });
+
+    const data = JSON.parse(body);
+    const prompt = data.prompt;
+
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    // Generate response
     const result = await model.generateContent(prompt);
     const reply = result.response.text();
 
-    // Return JSON
-    return new Response(JSON.stringify({ reply }), {
-      headers: { "Content-Type": "application/json" }
-    });
-
+    return res.status(200).json({ reply });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return res.status(500).json({ error: err.message });
   }
 }
