@@ -1,9 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const config = {
-  runtime: "edge",
-};
-
 export default async function handler(req: Request) {
   try {
     const { prompt } = await req.json();
